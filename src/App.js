@@ -16,8 +16,9 @@ class BooksApp extends Component {
   };
   constructor(props) {
     super(props);
+    // Source: https://stackoverflow.com/questions/28314368/how-to-maintain-state-after-a-page-refresh-in-react-js Referenced: 1/13/22
     this.state = {
-      books: [
+      books: JSON.parse(localStorage.getItem("books")) || [
         {
           id: 1,
           shelf: "currentlyReading",
@@ -77,14 +78,20 @@ class BooksApp extends Component {
     this.moveBook = this.moveBook.bind(this);
   }
   moveBook(id, shelf) {
-    this.setState((prevState) => ({
-      books: prevState.books
-        .filter((book) => book.id !== id)
-        .concat({
-          ...prevState.books.filter((book) => book.id === id)[0],
-          shelf: shelf,
-        }),
-    }));
+    // Source: https://stackoverflow.com/questions/28314368/how-to-maintain-state-after-a-page-refresh-in-react-js Referenced: 1/13/22
+    this.setState(
+      (prevState) => ({
+        books: prevState.books
+          .filter((book) => book.id !== id)
+          .concat({
+            ...prevState.books.filter((book) => book.id === id)[0],
+            shelf: shelf,
+          }),
+      }),
+      () => {
+        localStorage.setItem("books", JSON.stringify(this.state.books));
+      }
+    );
   }
   render() {
     return (
