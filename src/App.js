@@ -21,11 +21,12 @@ class BooksApp extends Component {
   };
   constructor(props) {
     super(props);
+    // Reference: https://stackoverflow.com/questions/28314368/how-to-maintain-state-after-a-page-refresh-in-react-js Accessed: 1/16/22
     this.state = {
       query: "",
       searchedBooks: [],
       searchResults: [],
-      shelvedBooks: [],
+      shelvedBooks: JSON.parse(localStorage.getItem("MyReads")) || [],
     };
     this.moveSearchedBook = this.moveSearchedBook.bind(this);
     this.moveShelvedBook = this.moveShelvedBook.bind(this);
@@ -42,19 +43,30 @@ class BooksApp extends Component {
     )[0];
     bookToMove.shelf = shelf;
     console.log(bookToMove);
-    this.setState((prevState) => ({
-      // Reference: https://stackoverflow.com/questions/2218999/how-to-remove-all-duplicates-from-an-array-of-objects Accessed: 1/16/22
-      shelvedBooks: prevState.shelvedBooks
-        .concat(bookToMove)
-        .filter(
-          (value, index, self) =>
-            index === self.findIndex((t) => t.id === value.id)
-        ),
-    }));
+    this.setState(
+      (prevState) => ({
+        // Reference: https://stackoverflow.com/questions/2218999/how-to-remove-all-duplicates-from-an-array-of-objects Accessed: 1/16/22
+        shelvedBooks: prevState.shelvedBooks
+          .concat(bookToMove)
+          .filter(
+            (value, index, self) =>
+              index === self.findIndex((t) => t.id === value.id)
+          ),
+      }),
+      () => {
+        // Reference: https://stackoverflow.com/questions/28314368/how-to-maintain-state-after-a-page-refresh-in-react-js Accessed: 1/16/22
+        localStorage.setItem(
+          "MyReads",
+          JSON.stringify(this.state.shelvedBooks)
+        );
+      }
+    );
     this.updateBooks();
   };
   moveShelvedBook = (id, shelf) => {
     this.state.shelvedBooks.filter((book) => book.id === id)[0].shelf = shelf;
+    // Reference: https://stackoverflow.com/questions/28314368/how-to-maintain-state-after-a-page-refresh-in-react-js Accessed: 1/16/22
+    localStorage.setItem("MyReads", JSON.stringify(this.state.shelvedBooks));
     this.updateBooks();
   };
   handleQuery = async (e) => {
