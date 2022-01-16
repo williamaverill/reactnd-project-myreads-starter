@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 
-import Book from "./Book";
+import ShelvedBook from "./ShelvedBook";
 
 class Bookshelf extends Component {
   constructor(props) {
@@ -20,7 +20,7 @@ class Bookshelf extends Component {
             {this.props.books.map((book) => {
               return (
                 <li key={book.id}>
-                  <Book book={book} moveBook={this.moveBook} />
+                  <ShelvedBook book={book} moveBook={this.moveBook} />
                 </li>
               );
             })}

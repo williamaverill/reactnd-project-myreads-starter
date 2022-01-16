@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 
-class Book extends Component {
+class SearchedBook extends Component {
   constructor(props) {
     super(props);
     this.state = { shelfValue: this.props.book.shelf };
@@ -21,7 +21,8 @@ class Book extends Component {
             style={{
               width: 128,
               height: 188,
-              backgroundImage: this.props.book.backgroundImage,
+              backgroundImage:
+                `url(` + this.props.book.imageLinks.smallThumbnail + `)`,
             }}
           />
           <div className="book-shelf-changer">
@@ -43,9 +44,9 @@ class Book extends Component {
   }
 }
 
-Book.propTypes = {
+SearchedBook.propTypes = {
   book: PropTypes.object.isRequired,
   moveBook: PropTypes.func.isRequired,
 };
 
-export default Book;
+export default SearchedBook;
