@@ -4,7 +4,7 @@ import "./App.css";
 import { Route, Link } from "react-router-dom";
 // import { v4 as uuidv4 } from "uuid";
 
-import { search } from "./BooksAPI";
+import { getAll, update, search } from "./BooksAPI";
 
 import SearchedBook from "./components/SearchedBook";
 import Bookshelf from "./components/Bookshelf";
@@ -12,12 +12,11 @@ import Bookshelf from "./components/Bookshelf";
 class App extends Component {
   constructor(props) {
     super(props);
-    // Reference: https://stackoverflow.com/questions/28314368/how-to-maintain-state-after-a-page-refresh-in-react-js Accessed: 1/16/22
     this.state = {
       query: "",
       searchedBooks: [],
       searchResults: [],
-      shelvedBooks: JSON.parse(localStorage.getItem("MyReads")) || [],
+      shelvedBooks: [],
     };
     this.moveSearchedBook = this.moveSearchedBook.bind(this);
     this.moveShelvedBook = this.moveShelvedBook.bind(this);
@@ -26,38 +25,29 @@ class App extends Component {
     this.updateBooks();
   }
   updateBooks = () => {
-    this.forceUpdate();
+    getAll().then((books) => {
+      this.setState({
+        shelvedBooks: books,
+      });
+    });
   };
   moveSearchedBook = (id, shelf) => {
     const bookToMove = this.state.searchResults.filter(
       (book) => book.id === id
     )[0];
-    bookToMove.shelf = shelf;
-    this.setState(
-      (prevState) => ({
-        // Reference: https://stackoverflow.com/questions/2218999/how-to-remove-all-duplicates-from-an-array-of-objects Accessed: 1/16/22
-        shelvedBooks: prevState.shelvedBooks
-          .concat(bookToMove)
-          .filter(
-            (value, index, self) =>
-              index === self.findIndex((t) => t.id === value.id)
-          ),
-      }),
-      () => {
-        // Reference: https://stackoverflow.com/questions/28314368/how-to-maintain-state-after-a-page-refresh-in-react-js Accessed: 1/16/22
-        localStorage.setItem(
-          "MyReads",
-          JSON.stringify(this.state.shelvedBooks)
-        );
-      }
-    );
-    this.updateBooks();
+    update(bookToMove, shelf).then((result) => {
+      console.log(result);
+      this.updateBooks();
+    });
   };
   moveShelvedBook = (id, shelf) => {
-    this.state.shelvedBooks.filter((book) => book.id === id)[0].shelf = shelf;
-    // Reference: https://stackoverflow.com/questions/28314368/how-to-maintain-state-after-a-page-refresh-in-react-js Accessed: 1/16/22
-    localStorage.setItem("MyReads", JSON.stringify(this.state.shelvedBooks));
-    this.updateBooks();
+    const bookToMove = this.state.shelvedBooks.filter(
+      (book) => book.id === id
+    )[0];
+    update(bookToMove, shelf).then((result) => {
+      console.log(result);
+      this.updateBooks();
+    });
   };
   handleQuery = async (e) => {
     this.setState(
