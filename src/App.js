@@ -2,9 +2,9 @@ import React, { Component } from "react";
 // import * as BooksAPI from './BooksAPI'
 import "./App.css";
 
-import { v4 as uuidv4 } from "uuid";
+// import { v4 as uuidv4 } from "uuid";
 
-import { get, getAll, update, search } from "./BooksAPI";
+import { search } from "./BooksAPI";
 
 import SearchedBook from "./components/SearchedBook";
 import Bookshelf from "./components/Bookshelf";
@@ -23,9 +23,9 @@ class BooksApp extends Component {
     super(props);
     this.state = {
       query: "",
-      searchedBooks: null,
+      searchedBooks: [],
       searchResults: [],
-      books: [],
+      shelvedBooks: [],
     };
     this.moveSearchedBook = this.moveSearchedBook.bind(this);
     this.moveShelvedBook = this.moveShelvedBook.bind(this);
@@ -34,28 +34,28 @@ class BooksApp extends Component {
     this.updateBooks();
   }
   updateBooks = () => {
-    getAll().then((books) => {
-      console.log(books);
-      this.setState({
-        books: books,
-      });
-    });
+    this.forceUpdate();
   };
   moveSearchedBook = (id, shelf) => {
-    update(
-      delete this.state.searchResults.filter((book) => book.id === id)[0].shelf,
-      shelf
-    ).then((result) => {
-      console.log(result);
-      this.updateBooks();
-    });
+    const bookToMove = this.state.searchResults.filter(
+      (book) => book.id === id
+    )[0];
+    bookToMove.shelf = shelf;
+    console.log(bookToMove);
+    this.setState((prevState) => ({
+      // Reference: https://stackoverflow.com/questions/2218999/how-to-remove-all-duplicates-from-an-array-of-objects Accessed: 1/16/22
+      shelvedBooks: prevState.shelvedBooks
+        .concat(bookToMove)
+        .filter(
+          (value, index, self) =>
+            index === self.findIndex((t) => t.id === value.id)
+        ),
+    }));
+    this.updateBooks();
   };
   moveShelvedBook = (id, shelf) => {
-    getAll().then((books) => {
-      update(books.filter((book) => book.id === id)[0], shelf).then(() =>
-        this.updateBooks()
-      );
-    });
+    this.state.shelvedBooks.filter((book) => book.id === id)[0].shelf = shelf;
+    this.updateBooks();
   };
   handleQuery = async (e) => {
     this.setState(
@@ -71,16 +71,27 @@ class BooksApp extends Component {
         if (books !== undefined && books.length > 0) {
           const searchResults = books
             .filter((book) => book.imageLinks !== undefined)
-            .map((book) => {
-              return {
-                id: uuidv4(),
-                shelf: "none",
-                imageLinks: {
-                  smallThumbnail: book.imageLinks.smallThumbnail,
-                },
-                title: book.title,
-                authors: book.authors === undefined ? [] : book.authors,
-              };
+            .map((searchedBook) => {
+              const match =
+                this.state.shelvedBooks.find(
+                  (shelvedBook) => searchedBook.id === shelvedBook.id
+                ) || {};
+              if (Object.keys(match).length > 0) {
+                return match;
+              } else {
+                return {
+                  id: searchedBook.id,
+                  shelf: "none",
+                  imageLinks: {
+                    smallThumbnail: searchedBook.imageLinks.smallThumbnail,
+                  },
+                  title: searchedBook.title,
+                  authors:
+                    searchedBook.authors === undefined
+                      ? []
+                      : searchedBook.authors,
+                };
+              }
             });
           this.setState({
             searchResults: searchResults,
@@ -95,7 +106,7 @@ class BooksApp extends Component {
         } else {
           this.setState({
             searchResults: [],
-            searchResults: [],
+            searchedBooks: [],
           });
         }
       }
@@ -143,21 +154,21 @@ class BooksApp extends Component {
               <div>
                 <Bookshelf
                   title={"Currently Reading"}
-                  books={this.state.books.filter(
+                  books={this.state.shelvedBooks.filter(
                     (book) => book.shelf === "currentlyReading"
                   )}
                   moveBook={this.moveShelvedBook}
                 />
                 <Bookshelf
                   title={"Want to Read"}
-                  books={this.state.books.filter(
+                  books={this.state.shelvedBooks.filter(
                     (book) => book.shelf === "wantToRead"
                   )}
                   moveBook={this.moveShelvedBook}
                 />
                 <Bookshelf
                   title={"Read"}
-                  books={this.state.books.filter(
+                  books={this.state.shelvedBooks.filter(
                     (book) => book.shelf === "read"
                   )}
                   moveBook={this.moveShelvedBook}
